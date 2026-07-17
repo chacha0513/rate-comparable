@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rate Per Night — Hotel & STR Value Comparator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0c0d0f; --chalk:#f0ede6; --chalk-dim:#8a8880;
+    --amber:#f472b6; --teal:#2dd9c5; --lilac:#c4b5fd; --lilac-dim:#a78bfa;
+    --panel:#161719; --panel-2:#1c1d20; --panel-border:rgba(240,237,230,0.08); --line:rgba(240,237,230,0.12);
+    --good:#2dd9c5; --font-display:'Syne',sans-serif; --font-body:'Inter',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--ink);color:var(--chalk);font-family:var(--font-body);line-height:1.6;position:relative;overflow-x:hidden;}
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:999;opacity:0.025;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ambient background: hotel facade window grid, echoing occupancy */
+  .bg-scene{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+  .hotel-grid{position:absolute;inset:0;display:grid;}
+  .window{
+    border:1px solid rgba(240,237,230,0.05);
+    background:rgba(240,237,230,0.012);
+    transition: background 3s ease, border-color 3s ease;
+  }
+  .window.lit{ animation: window-glow 7s ease-in-out infinite; }
+  @keyframes window-glow{
+    0%, 100% { background:rgba(240,237,230,0.012); border-color:rgba(240,237,230,0.05); }
+    50% { background: var(--glow-color, rgba(244,114,182,0.09)); border-color: var(--glow-border, rgba(244,114,182,0.25)); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .window.lit{ animation: none; background: rgba(240,237,230,0.03); }
+  }
+
+  .wrap{max-width:920px;margin:0 auto;padding:56px 24px 90px;position:relative;z-index:1;}
+
+  .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--lilac-dim);display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+  .eyebrow::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);}
+  h1{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,4.5vw,44px);letter-spacing:-0.02em;line-height:1.08;margin-bottom:14px;}
+  h1 span{color:var(--amber);}
+  .lede{font-size:15px;color:var(--chalk-dim);max-width:640px;margin-bottom:40px;}
+
+  .panel{background:var(--panel);border:1px solid var(--panel-border);border-radius:6px;padding:28px;margin-bottom:28px;position:relative;}
+  .panel-index{font-family:var(--font-mono);font-size:11px;color:var(--lilac-dim);letter-spacing:0.1em;margin-bottom:8px;}
+  .panel-title{font-family:var(--font-display);font-weight:700;font-size:17px;margin-bottom:4px;}
+  .panel-hint{font-family:var(--font-mono);font-size:10.5px;color:var(--chalk-dim);letter-spacing:0.04em;margin-bottom:22px;}
+
+  .row{display:grid;grid-template-columns:1.05fr 0.65fr 0.4fr 0.8fr 0.7fr 0.7fr auto;gap:8px;align-items:center;margin-bottom:10px;}
+  .field{min-width:0;}
+  .mobile-label{display:none;}
+  .row-collapsible{display:contents;}
+  .name-input-wrap{display:flex;align-items:center;gap:8px;}
+  .name-input-wrap input{flex:1;min-width:0;}
+  .row-toggle{
+    display:none;flex-shrink:0;width:34px;height:38px;background:transparent;
+    border:1px solid var(--line);color:var(--chalk-dim);border-radius:4px;cursor:pointer;
+    font-size:14px;transition:transform .25s ease,color .15s ease,border-color .15s ease;
+  }
+  .row-toggle:hover{color:var(--chalk);border-color:var(--lilac-dim);}
+  .row-toggle.is-collapsed{transform:rotate(-90deg);}
+  .row input{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--chalk);font-family:var(--font-body);font-size:16px;padding:11px 12px;border-radius:4px;transition:border-color .15s ease;}
+  .row input:focus{outline:none;border-color:var(--lilac-dim);}
+  .row input::placeholder{color:#54524c;}
+  .field-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--chalk-dim);margin-bottom:5px;display:block;}
+  .field-label.optional{color:var(--lilac-dim);}
+  .col{display:flex;flex-direction:column;}
+  .remove-btn{background:transparent;border:1px solid var(--line);color:var(--chalk-dim);width:34px;height:38px;border-radius:4px;cursor:pointer;font-size:16px;line-height:1;transition:all .15s ease;align-self:flex-end;}
+  .remove-btn:hover{color:var(--amber);border-color:var(--amber);}
+
+  .headers{display:grid;grid-template-columns:1.05fr 0.65fr 0.4fr 0.8fr 0.7fr 0.7fr auto;gap:8px;margin-bottom:2px;}
+
+  .add-row{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;}
+  button.primary, button.ghost{font-family:var(--font-mono);font-size:11.5px;letter-spacing:0.06em;text-transform:uppercase;padding:11px 20px;border-radius:4px;cursor:pointer;transition:all .15s ease;border:1px solid transparent;}
+  button.primary{background:var(--lilac);color:var(--ink);}
+  button.primary:hover{background:var(--chalk);}
+  button.ghost{background:transparent;color:var(--chalk-dim);border-color:var(--line);}
+  button.ghost:hover{color:var(--chalk);border-color:var(--chalk-dim);}
+  .example-select{
+    font-family:var(--font-mono);font-size:11.5px;letter-spacing:0.04em;
+    background:transparent;color:var(--chalk-dim);border:1px solid var(--line);
+    padding:11px 14px;border-radius:4px;cursor:pointer;transition:all .15s ease;
+  }
+  .example-select:hover{color:var(--chalk);border-color:var(--lilac-dim);}
+  .example-select option{background:var(--panel-2);color:var(--chalk);}
+
+  /* RESULTS */
+  .results{display:flex;flex-direction:column;gap:16px;}
+  .result-row{display:grid;grid-template-columns:1fr auto 90px;align-items:center;gap:16px;background:var(--panel-2);border:1px solid var(--line);border-radius:3px 10px 10px 3px;padding:16px 18px 16px 26px;position:relative;overflow:visible;cursor:pointer;transition:border-color .15s ease;}
+  .result-row::after{
+    content:'';position:absolute;left:-1px;top:50%;transform:translateY(-50%);
+    width:14px;height:14px;border-radius:50%;background:var(--ink);border:1px solid var(--line);
+  }
+  .result-row:hover{border-color:var(--lilac-dim);}
+  .result-row.best{border-color:var(--teal);}
+  .result-row.best::before{
+    content:'BEST VALUE';position:absolute;top:-9px;right:14px;
+    background:transparent;color:var(--teal);
+    font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.1em;font-weight:700;
+    padding:3px 10px;border:1.5px dashed var(--teal);border-radius:3px;
+    transform:rotate(-4deg);background:var(--panel);
+  }
+  .result-card{display:flex;flex-direction:column;gap:0;}
+  .breakdown{max-height:0;overflow:hidden;transition:max-height .25s ease;background:var(--ink);border-radius:0 0 8px 8px;}
+  .breakdown-inner{padding:16px 18px 16px 26px;font-family:var(--font-mono);font-size:11.5px;color:var(--chalk-dim);line-height:2;border-top:1px dashed var(--line);}
+  .breakdown-inner .step{display:flex;justify-content:space-between;gap:12px;}
+  .breakdown-inner .step .k{color:var(--chalk-dim);}
+  .breakdown-inner .step .v{color:var(--chalk);font-variant-numeric:tabular-nums;}
+  .breakdown-inner .final{color:var(--teal);font-weight:700;border-top:1px solid var(--line);margin-top:6px;padding-top:8px;}
+  .expand-hint{font-family:var(--font-mono);font-size:9px;color:var(--chalk-dim);letter-spacing:0.05em;text-transform:uppercase;margin-top:2px;opacity:0.7;}
+  .r-name{font-family:var(--font-display);font-weight:700;font-size:15px;}
+  .r-meta{font-family:var(--font-mono);font-size:10.5px;color:var(--chalk-dim);margin-top:3px;}
+  .r-bar-wrap{width:220px;}
+  .r-bar-track{height:8px;background:rgba(240,237,230,0.06);border-radius:4px;overflow:hidden;}
+  .r-bar-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(0.16,1,0.3,1);}
+  .r-value{font-family:var(--font-mono);font-weight:700;font-size:16px;text-align:right;color:var(--chalk);font-variant-numeric:tabular-nums;}
+  .r-value small{display:block;font-weight:400;font-size:9.5px;color:var(--chalk-dim);text-transform:uppercase;letter-spacing:0.04em;}
+
+  .empty-state{font-family:var(--font-mono);font-size:12px;color:var(--chalk-dim);text-align:center;padding:30px 0;}
+
+  .view-tabs{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:20px;width:fit-content;position:relative;}
+  .view-tabs::after{content:'';position:absolute;left:50%;top:8px;bottom:8px;width:0;border-left:1.5px dashed var(--line);}
+  .view-tab{font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--chalk-dim);background:var(--panel-2);border:none;padding:11px 20px;cursor:pointer;transition:all .15s ease;}
+  .view-tab:hover{color:var(--chalk);}
+  .view-tab.active{color:var(--ink);background:var(--amber);}
+  .view-tab.active.property{background:var(--teal);}
+
+  .note{font-family:var(--font-mono);font-size:11px;color:var(--chalk-dim);line-height:1.7;border-top:1px solid var(--line);padding-top:18px;margin-top:24px;}
+
+  footer{font-family:var(--font-mono);font-size:10.5px;color:var(--chalk-dim);text-align:center;padding-top:20px;letter-spacing:0.05em;}
+  footer a{color:var(--lilac-dim);text-decoration:none;}
+
+  .cta-eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--amber);text-align:center;margin-bottom:16px;}
+  .cta-box{background:var(--amber);color:var(--ink);border-radius:8px;padding:22px 28px;text-align:center;font-family:var(--font-display);font-weight:700;font-size:16px;line-height:1.5;margin-bottom:14px;}
+  .connect-box{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:18px 28px;text-align:center;transition:border-color .15s ease;}
+  .connect-box a{font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--chalk);text-decoration:none;display:block;}
+  .connect-box:hover{border-color:var(--lilac-dim);}
+  .connect-box:hover a{color:var(--lilac);}
+
+  @media (max-width:760px){
+    .wrap{padding:40px 18px 70px;}
+    .eyebrow{font-size:9.5px;letter-spacing:0.1em;line-height:1.6;gap:8px;}
+    .eyebrow::before{flex-shrink:0;margin-top:2px;}
+    h1{font-size:clamp(26px,7vw,34px);}
+    .lede{font-size:14px;}
+    .panel{padding:20px 16px;}
+    .panel-title{font-size:16px;}
+    .row, .headers{grid-template-columns:1fr;}
+    .headers{display:none;}
+    .row{
+      background:rgba(240,237,230,0.02);border:1px solid var(--line);border-radius:8px;
+      padding:16px 14px;margin-bottom:14px;
+    }
+    .field{margin-bottom:2px;}
+    .mobile-label{
+      display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;
+      text-transform:uppercase;color:var(--lilac-dim);margin-bottom:6px;
+    }
+    .field-label{margin-top:10px;}
+    .row-toggle{display:flex;align-items:center;justify-content:center;}
+    .row-collapsible{
+      display:block;max-height:600px;overflow:hidden;opacity:1;
+      transition:max-height .3s ease, opacity .25s ease, margin .3s ease;
+    }
+    .row-collapsible.collapsed{max-height:0;opacity:0;}
+    .remove-btn{
+      align-self:flex-start;width:100%;height:42px;font-size:13px;letter-spacing:0.04em;
+      text-transform:uppercase;font-family:var(--font-mono);color:var(--amber);
+      border-color:rgba(244,114,182,0.3);margin-top:4px;margin-bottom:8px;
+    }
+    .example-select{font-size:16px;padding:12px 14px;width:100%;}
+    .add-row{width:100%;}
+    .add-row button.primary, .add-row button.ghost{flex:1 1 auto;font-size:11px;padding:12px 14px;}
+    .view-tabs{width:100%;}
+    .view-tab{flex:1;font-size:10px;padding:12px 10px;text-align:center;}
+    .result-row{grid-template-columns:1fr;padding:16px 16px 16px 22px;}
+    .r-bar-wrap{width:100%;}
+    .r-value{text-align:left;font-size:18px;margin-top:6px;}
+    .r-name{font-size:14.5px;}
+    .r-meta{font-size:10px;line-height:1.6;}
+    .breakdown-inner{padding:14px 16px;font-size:11px;}
+    .breakdown-inner .step{flex-wrap:wrap;}
+    .note{font-size:10.5px;}
+  }
+</style>
+</head>
+<body>
+<div class="bg-scene">
+  <div class="hotel-grid" id="hotelGrid"></div>
+
+</div>
+<div class="wrap">
+  <div class="eyebrow">By Charlene Mae Galang · Revenue &amp; Pricing Strategist</div>
+  <h1>Rate Per Night<br><span>Value Comparator</span></h1>
+  <p class="lede">Compare any set of rates — direct, OTA, bundled, loyalty, weekly, early-bird — as a guest (true per-night value after crediting perks) or as a revenue manager (net revenue per night after channel cost). Same numbers, two different answers. Load a preset scenario below or add your own.</p>
+
+  <div class="panel">
+    <div class="panel-index">01 — INPUT</div>
+    <div class="panel-title">Your Options</div>
+    <div class="panel-hint">ADD EACH RATE OR PACKAGE YOU'RE COMPARING →</div>
+
+    <div class="headers">
+      <span class="field-label">Option name</span>
+      <span class="field-label">Total price</span>
+      <span class="field-label">Nights</span>
+      <span class="field-label">Notes (optional)</span>
+      <span class="field-label optional">Perk cost/value $</span>
+      <span class="field-label optional">Channel cost %</span>
+      <span></span>
+    </div>
+
+    <div id="rows"></div>
+
+    <div class="add-row">
+      <button class="primary" onclick="addRow()">+ Add Option</button>
+      <select class="example-select" id="exampleSelect" onchange="loadExample(this.value); this.selectedIndex=0;">
+        <option value="" disabled selected>Load Example ▾</option>
+        <option value="hotelPackage">Hotel: Direct vs OTA vs Package</option>
+        <option value="strChannels">STR: Airbnb vs VRBO vs Direct</option>
+        <option value="eventSurge">Event Weekend: Off-Peak vs Surge</option>
+        <option value="loyaltyDirect">Loyalty Direct vs Public Rate</option>
+        <option value="extendedStay">Extended Stay: Weekly vs Nightly</option>
+        <option value="earlyBird">Early-Bird vs Last-Minute</option>
+      </select>
+      <button class="ghost" onclick="clearAll()">Clear All</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-index">02 — OUTPUT</div>
+    <div class="panel-title">Comparison</div>
+    <div class="panel-hint" id="resultsHint">SORTED LOW → HIGH</div>
+    <div class="view-tabs">
+      <button class="view-tab active" data-view="guest" onclick="setView('guest')">Guest View</button>
+      <button class="view-tab" data-view="property" onclick="setView('property')">Revenue Manager View</button>
+    </div>
+    <div class="results" id="results">
+      <div class="empty-state">Add at least two options above to compare.</div>
+    </div>
+    <div class="note" id="noteBox" style="display:none;"></div>
+  </div>
+
+  <div class="cta-eyebrow">Built as an applied project by Charlene Mae Galang</div>
+  <div class="cta-box">This is a hands-on project I built to demonstrate pricing strategy, demand forecasting &amp; revenue optimization skills using AI tools</div>
+  <div class="connect-box">
+    <a href="https://www.linkedin.com/in/charlene-mae-galang-02054b115/" target="_blank" rel="noopener">Let's connect — reach out about opportunities</a>
+  </div>
+
+  <footer>Guest-side and revenue-manager-side value comparisons — no data leaves your browser. · Charlene Mae Galang</footer>
+</div>
+
+<script>
+function buildHotelGrid(){
+  const grid = document.getElementById('hotelGrid');
+  if(!grid) return;
+  const cellSize = 46;
+  const cols = Math.ceil(window.innerWidth / cellSize);
+  const rows = Math.ceil(window.innerHeight / cellSize);
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+  grid.innerHTML = '';
+
+  const glowColors = [
+    ['rgba(244,114,182,0.09)','rgba(244,114,182,0.25)'], // amber/pink
+    ['rgba(45,217,197,0.08)','rgba(45,217,197,0.22)'],   // teal
+    ['rgba(196,181,253,0.08)','rgba(196,181,253,0.22)'], // lilac
+  ];
+
+  const total = cols * rows;
+  // roughly 6% of "rooms" are lit at any given time — sparse, like a real building at night
+  const litCount = Math.round(total * 0.06);
+  const litIndices = new Set();
+  while(litIndices.size < litCount){
+    litIndices.add(Math.floor(Math.random() * total));
+  }
+
+  for(let i = 0; i < total; i++){
+    const win = document.createElement('div');
+    win.className = 'window';
+    if(litIndices.has(i)){
+      win.classList.add('lit');
+      const [bg, border] = glowColors[Math.floor(Math.random() * glowColors.length)];
+      win.style.setProperty('--glow-color', bg);
+      win.style.setProperty('--glow-border', border);
+      win.style.animationDelay = (Math.random() * 8) + 's';
+      win.style.animationDuration = (5 + Math.random() * 6) + 's';
+    }
+    grid.appendChild(win);
+  }
+}
+buildHotelGrid();
+window.addEventListener('resize', () => {
+  clearTimeout(window._hotelGridResize);
+  window._hotelGridResize = setTimeout(buildHotelGrid, 200);
+});
+
+let rowCount = 0;
+const colors = ['#f472b6','#2dd9c5','#c4b5fd','#f9a8d4','#7dd3c0','#ddd6fe'];
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function addRow(name='', price='', nights='', notes='', perkValue='', commissionPct=''){
+  rowCount++;
+  const id = 'row_' + rowCount;
+  const div = document.createElement('div');
+  div.className = 'row';
+  div.id = id;
+  div.innerHTML = `
+    <div class="field name-field">
+      <span class="mobile-label">Option name</span>
+      <div class="name-input-wrap">
+        <input type="text" placeholder="e.g. Direct rate" value="${name}" oninput="calculate()">
+        <button type="button" class="row-toggle is-collapsed" onclick="toggleRowCollapse('${id}')" aria-label="Toggle option details">▾</button>
+      </div>
+    </div>
+    <div class="row-collapsible collapsed" id="collapsible_${id}">
+      <div class="field"><span class="mobile-label">Total price</span><input type="number" placeholder="e.g. 450" value="${price}" oninput="calculate()" min="0" step="0.01"></div>
+      <div class="field"><span class="mobile-label">Nights</span><input type="number" placeholder="e.g. 3" value="${nights}" oninput="calculate()" min="1" step="1"></div>
+      <div class="field"><span class="mobile-label">Notes (optional)</span><input type="text" placeholder="incl. breakfast, etc." value="${notes}" oninput="calculate()"></div>
+      <div class="field"><span class="mobile-label">Perk cost/value $</span><input type="number" placeholder="e.g. 40" value="${perkValue}" oninput="calculate()" min="0" step="0.01"></div>
+      <div class="field"><span class="mobile-label">Channel cost %</span><input type="number" placeholder="e.g. 18" value="${commissionPct}" oninput="calculate()" min="0" max="100" step="0.1"></div>
+      <button class="remove-btn" onclick="removeRow('${id}')">× Remove</button>
+    </div>
+  `;
+  document.getElementById('rows').appendChild(div);
+  calculate();
+}
+
+function toggleRowCollapse(id){
+  const el = document.getElementById('collapsible_' + id);
+  const btn = document.querySelector(`#${id} .row-toggle`);
+  if(!el) return;
+  el.classList.toggle('collapsed');
+  if(btn) btn.classList.toggle('is-collapsed');
+}
+
+function removeRow(id){
+  document.getElementById(id).remove();
+  calculate();
+}
+
+function clearAll(){
+  document.getElementById('rows').innerHTML = '';
+  rowCount = 0;
+  calculate();
+}
+
+const examplePresets = {
+  hotelPackage: [
+    ['Direct rate', '450', '3', 'no inclusions', '', '3'],
+    ['OTA bundle', '620', '3', 'incl. breakfast (~$20/night value)', '60', '18'],
+    ['3-night package', '540', '3', 'incl. breakfast + late checkout', '90', '0'],
+  ],
+  strChannels: [
+    ['Airbnb', '300', '2', 'incl. cleaning fee', '', '3'],
+    ['VRBO', '320', '2', 'incl. cleaning + welcome basket (~$25 value)', '25', '8'],
+    ['Direct (host site)', '275', '2', 'host absorbs cleaning cost', '', '3'],
+  ],
+  eventSurge: [
+    ['Off-peak weekday rate', '300', '1', 'booked via OTA, no event nearby', '', '15'],
+    ['Surge weekend (OTA)', '620', '1', 'concert in town, booked via OTA', '', '15'],
+    ['Surge weekend (direct)', '580', '1', 'same surge weekend, booked direct', '', '3'],
+  ],
+  loyaltyDirect: [
+    ['Loyalty member rate', '400', '3', 'member rate, incl. breakfast (~$15/night value)', '45', '2'],
+    ['Public OTA rate', '460', '3', 'no breakfast, booked via OTA', '', '18'],
+    ['Public direct rate', '430', '3', 'no breakfast, non-member, booked direct', '', '3'],
+  ],
+  extendedStay: [
+    ['7-night weekly package', '980', '7', 'discounted weekly package rate', '', '0'],
+    ['7x nightly rate', '1050', '7', 'standard nightly rate × 7 nights', '', '3'],
+    ['7 nights via OTA', '1120', '7', 'same 7 nights booked through OTA', '', '18'],
+  ],
+  earlyBird: [
+    ['Early-bird (OTA)', '380', '3', 'booked 60 days out, non-refundable', '', '15'],
+    ['Last-minute (OTA)', '510', '3', 'booked 2 days out, free cancellation', '', '15'],
+    ['Early-bird (direct)', '360', '3', 'booked direct, 60 days out, non-refundable', '', '3'],
+  ],
+};
+
+function loadExample(key){
+  const preset = examplePresets[key] || examplePresets.hotelPackage;
+  clearAll();
+  preset.forEach(row => addRow(...row));
+}
+
+function toggleBreakdown(rid){
+  const el = document.getElementById('bd-' + rid);
+  if(!el) return;
+  const isOpen = el.style.maxHeight && el.style.maxHeight !== '0px';
+  // close all others for a clean single-open accordion feel
+  document.querySelectorAll('.breakdown').forEach(b => b.style.maxHeight = '0px');
+  if(!isOpen){
+    el.style.maxHeight = el.scrollHeight + 'px';
+  }
+}
+
+let currentView = 'guest';
+
+function setView(view){
+  currentView = view;
+  document.querySelectorAll('.view-tab').forEach(t => {
+    t.classList.remove('active','property');
+  });
+  const activeTab = document.querySelector(`.view-tab[data-view="${view}"]`);
+  activeTab.classList.add('active');
+  if(view === 'property') activeTab.classList.add('property');
+  calculate();
+}
+
+function calculate(){
+  const rows = document.querySelectorAll('#rows .row');
+  const data = [];
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const name = inputs[0].value.trim();
+    const price = parseFloat(inputs[1].value);
+    const nights = parseFloat(inputs[2].value);
+    const notes = inputs[3].value.trim();
+    const perkRaw = inputs[4].value;
+    const perkValue = perkRaw !== '' ? parseFloat(perkRaw) : 0;
+    const hasPerk = perkRaw !== '' && !isNaN(perkValue) && perkValue > 0;
+    const commRaw = inputs[5].value;
+    const commissionPct = commRaw !== '' ? parseFloat(commRaw) : 0;
+    const hasCommission = commRaw !== '' && !isNaN(commissionPct) && commissionPct > 0;
+    if(name && price > 0 && nights > 0){
+      const perNight = price / nights;
+      const adjustedPerNight = Math.max(price - perkValue, 0) / nights;
+      // Property view: net revenue after channel commission AND the cost of providing perks
+      const netRevenue = price - (price * commissionPct / 100) - perkValue;
+      const netRevenuePerNight = Math.max(netRevenue, 0) / nights;
+      data.push({name, price, nights, notes, perkValue, hasPerk, commissionPct, hasCommission, perNight, adjustedPerNight, netRevenuePerNight});
+    }
+  });
+
+  const resultsEl = document.getElementById('results');
+  const noteBox = document.getElementById('noteBox');
+  const hint = document.getElementById('resultsHint');
+
+  if(data.length < 2){
+    resultsEl.innerHTML = '<div class="empty-state">Add at least two options above to compare.</div>';
+    noteBox.style.display = 'none';
+    hint.textContent = 'SORTED LOW → HIGH';
+    return;
+  }
+
+  if(currentView === 'guest'){
+    const anyPerks = data.some(d => d.hasPerk);
+    const sortKey = anyPerks ? 'adjustedPerNight' : 'perNight';
+    data.sort((a,b) => a[sortKey] - b[sortKey]);
+    const maxVal = Math.max(...data.map(d => d[sortKey]));
+    const best = data[0], worst = data[data.length-1];
+
+    resultsEl.innerHTML = data.map((d,i) => {
+      const rid = 'g' + i;
+      const guestBreakdown = anyPerks
+        ? `
+          <div class="step"><span class="k">Total price</span><span class="v">$${d.price.toFixed(2)}</span></div>
+          <div class="step"><span class="k">− Perk value credited</span><span class="v">− $${d.perkValue.toFixed(2)}</span></div>
+          <div class="step"><span class="k">= Adjusted price</span><span class="v">$${Math.max(d.price - d.perkValue,0).toFixed(2)}</span></div>
+          <div class="step"><span class="k">÷ Nights</span><span class="v">÷ ${d.nights}</span></div>
+          <div class="step final"><span class="k">= Adjusted price / night</span><span class="v">$${d.adjustedPerNight.toFixed(2)}</span></div>
+          <div class="step" style="margin-top:8px;opacity:0.75;"><span class="k">(raw, no perk credit: $${d.price.toFixed(2)} ÷ ${d.nights} = $${d.perNight.toFixed(2)}/night)</span></div>
+        `
+        : `
+          <div class="step"><span class="k">Total price</span><span class="v">$${d.price.toFixed(2)}</span></div>
+          <div class="step"><span class="k">÷ Nights</span><span class="v">÷ ${d.nights}</span></div>
+          <div class="step final"><span class="k">= Price / night</span><span class="v">$${d.perNight.toFixed(2)}</span></div>
+        `;
+      return `
+      <div class="result-card">
+        <div class="result-row ${i===0 ? 'best' : ''}" onclick="toggleBreakdown('${rid}')">
+          <div>
+            <div class="r-name">${escapeHtml(d.name)}</div>
+            <div class="r-meta">$${d.price.toFixed(2)} ÷ ${d.nights} night${d.nights==1?'':'s'}${d.notes ? ' · ' + escapeHtml(d.notes) : ''}${d.hasPerk ? ' · perks valued at $' + d.perkValue.toFixed(2) : ''}</div>
+            <div class="expand-hint">Tap to see the math ▾</div>
+          </div>
+          <div class="r-bar-wrap">
+            <div class="r-bar-track"><div class="r-bar-fill" style="width:${(d[sortKey]/maxVal*100).toFixed(1)}%; background:${colors[i % colors.length]}"></div></div>
+          </div>
+          <div class="r-value">
+            $${d[sortKey].toFixed(2)}<small>${anyPerks ? 'adjusted / night' : 'per night'}</small>
+            ${anyPerks ? `<div style="font-family:var(--font-mono);font-size:9.5px;color:var(--chalk-dim);text-align:right;margin-top:3px;">raw $${d.perNight.toFixed(2)}</div>` : ''}
+          </div>
+        </div>
+        <div class="breakdown" id="bd-${rid}"><div class="breakdown-inner">${guestBreakdown}</div></div>
+      </div>
+    `;
+    }).join('');
+
+    hint.textContent = (anyPerks ? 'GUEST VIEW · SORTED BY ADJUSTED VALUE · ' : 'GUEST VIEW · SORTED LOW → HIGH · ') + data.length + ' OPTIONS';
+
+    const diff = worst[sortKey] - best[sortKey];
+    const pct = ((diff / worst[sortKey]) * 100).toFixed(0);
+    noteBox.style.display = 'block';
+    if(anyPerks){
+      noteBox.textContent = `"${best.name}" is the best true value at $${best.adjustedPerNight.toFixed(2)}/night after crediting perks — $${diff.toFixed(2)} (${pct}%) better than "${worst.name}." Perk values are your own estimate of what breakfast, late checkout, etc. are worth to you — adjust them and the ranking updates instantly.`;
+    } else {
+      noteBox.textContent = `"${best.name}" is the best value at $${best.perNight.toFixed(2)}/night — that's $${diff.toFixed(2)} (${pct}%) cheaper per night than "${worst.name}." If a bundled option includes perks like breakfast, add an estimated dollar value for it above to see the true adjusted comparison.`;
+    }
+
+  } else {
+    // PROPERTY / REVENUE MANAGER VIEW — higher net revenue per night is better
+    const sorted = [...data].sort((a,b) => b.netRevenuePerNight - a.netRevenuePerNight);
+    const maxVal = Math.max(...sorted.map(d => d.netRevenuePerNight)) || 1;
+    const best = sorted[0], worst = sorted[sorted.length-1];
+
+    resultsEl.innerHTML = sorted.map((d,i) => {
+      const rid = 'p' + i;
+      const commAmt = d.price * d.commissionPct / 100;
+      const propBreakdown = `
+        <div class="step"><span class="k">Total price (gross)</span><span class="v">$${d.price.toFixed(2)}</span></div>
+        <div class="step"><span class="k">− Channel cost (${d.commissionPct.toFixed(1)}% of $${d.price.toFixed(2)})</span><span class="v">− $${commAmt.toFixed(2)}</span></div>
+        <div class="step"><span class="k">− Perk cost to property</span><span class="v">− $${d.perkValue.toFixed(2)}</span></div>
+        <div class="step"><span class="k">= Net revenue</span><span class="v">$${Math.max(d.price - commAmt - d.perkValue,0).toFixed(2)}</span></div>
+        <div class="step"><span class="k">÷ Nights</span><span class="v">÷ ${d.nights}</span></div>
+        <div class="step final"><span class="k">= Net revenue / night</span><span class="v">$${d.netRevenuePerNight.toFixed(2)}</span></div>
+        <div class="step" style="margin-top:8px;opacity:0.75;"><span class="k">(gross, no deductions: $${d.price.toFixed(2)} ÷ ${d.nights} = $${d.perNight.toFixed(2)}/night)</span></div>
+      `;
+      return `
+      <div class="result-card">
+        <div class="result-row ${i===0 ? 'best' : ''}" onclick="toggleBreakdown('${rid}')">
+          <div>
+            <div class="r-name">${escapeHtml(d.name)}</div>
+            <div class="r-meta">$${d.price.toFixed(2)} gross${d.hasCommission ? ' · ' + d.commissionPct.toFixed(1) + '% channel cost' : ' · 0% channel cost'}${d.perkValue > 0 ? ' · $' + d.perkValue.toFixed(2) + ' perk cost' : ''}</div>
+            <div class="expand-hint">Tap to see the math ▾</div>
+          </div>
+          <div class="r-bar-wrap">
+            <div class="r-bar-track"><div class="r-bar-fill" style="width:${(d.netRevenuePerNight/maxVal*100).toFixed(1)}%; background:${colors[i % colors.length]}"></div></div>
+          </div>
+          <div class="r-value">
+            $${d.netRevenuePerNight.toFixed(2)}<small>net rev / night</small>
+            <div style="font-family:var(--font-mono);font-size:9.5px;color:var(--chalk-dim);text-align:right;margin-top:3px;">gross $${d.perNight.toFixed(2)}</div>
+          </div>
+        </div>
+        <div class="breakdown" id="bd-${rid}"><div class="breakdown-inner">${propBreakdown}</div></div>
+      </div>
+    `;
+    }).join('');
+
+    hint.textContent = 'REVENUE MANAGER VIEW · SORTED BY NET REVENUE (HIGHEST FIRST) · ' + data.length + ' OPTIONS';
+
+    const diff = best.netRevenuePerNight - worst.netRevenuePerNight;
+    const pct = worst.netRevenuePerNight > 0 ? ((diff / worst.netRevenuePerNight) * 100).toFixed(0) : 'n/a';
+    noteBox.style.display = 'block';
+    noteBox.textContent = `"${best.name}" nets the property the most at $${best.netRevenuePerNight.toFixed(2)}/night after channel cost and perk cost — $${diff.toFixed(2)} (${pct}%) more than "${worst.name}," even though gross price may tell a different story. This view assumes perk cost to the property roughly equals the perk value entered on the left — adjust if your actual cost to provide differs from guest-perceived value. It also doesn't account for displacement risk on high-demand dates, which a full RM decision should.`;
+  }
+}
+
+// init
+loadExample('hotelPackage');
+</script>
+</body>
+</html>
