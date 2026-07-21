@@ -40,6 +40,39 @@
 
   .wrap{max-width:920px;margin:0 auto;padding:56px 24px 90px;position:relative;z-index:1;}
 
+  /* INTRO OVERLAY */
+  .intro-overlay{
+    position:fixed;inset:0;z-index:50;background:rgba(12,13,15,0.97);
+    display:flex;align-items:center;justify-content:center;padding:24px;
+    transition:opacity .5s ease, visibility .5s ease;
+  }
+  .intro-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+  .intro-card{max-width:600px;width:100%;}
+  .intro-eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--lilac-dim);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+  .intro-eyebrow::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);}
+  .intro-headline{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,5vw,42px);line-height:1.15;letter-spacing:-0.02em;margin-bottom:20px;}
+  .intro-headline span{color:var(--amber);}
+  .intro-body{font-size:15px;color:var(--chalk-dim);line-height:1.7;margin-bottom:26px;}
+  .intro-body strong{color:var(--chalk);font-weight:600;}
+  .intro-points{list-style:none;margin-bottom:32px;}
+  .intro-points li{
+    font-family:var(--font-mono);font-size:12.5px;color:var(--chalk-dim);
+    padding:10px 0;border-top:1px solid var(--line);display:flex;gap:10px;align-items:baseline;
+  }
+  .intro-points li:last-child{border-bottom:1px solid var(--line);}
+  .intro-points li::before{content:'→';color:var(--teal);flex-shrink:0;}
+  .intro-start{
+    font-family:var(--font-mono);font-size:13px;letter-spacing:0.06em;text-transform:uppercase;
+    background:var(--amber);color:var(--ink);border:none;padding:15px 28px;border-radius:6px;
+    cursor:pointer;font-weight:700;transition:background .15s ease,transform .15s ease;
+  }
+  .intro-start:hover{background:var(--chalk);transform:translateY(-1px);}
+  @media (max-width:600px){
+    .intro-headline{font-size:26px;}
+    .intro-body{font-size:14px;}
+    .intro-start{width:100%;padding:16px;}
+  }
+
   .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--lilac-dim);display:flex;align-items:center;gap:10px;margin-bottom:16px;}
   .eyebrow::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);}
   h1{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,4.5vw,44px);letter-spacing:-0.02em;line-height:1.08;margin-bottom:14px;}
@@ -193,6 +226,19 @@
 <div class="bg-scene">
   <div class="hotel-grid" id="hotelGrid"></div>
 
+</div>
+<div class="intro-overlay" id="introOverlay">
+  <div class="intro-card">
+    <div class="intro-eyebrow">By Charlene Mae Galang · Revenue &amp; Pricing Strategist</div>
+    <h1 class="intro-headline">Same room.<br>Three prices.<br><span>One real answer.</span></h1>
+    <p class="intro-body">Direct rate, OTA bundle, "deal" package with breakfast — different totals, different lengths of stay, no easy way to compare them. This tool strips out the noise and shows the <strong>true per-night value</strong> of any set of rates, from both sides of the booking.</p>
+    <ul class="intro-points">
+      <li><strong style="color:var(--chalk);">Guest View</strong> — what you actually pay per night, after crediting perks like breakfast or late checkout</li>
+      <li><strong style="color:var(--chalk);">Revenue Manager View</strong> — what the property actually nets per night, after channel commission and perk cost</li>
+      <li>Free, no login, works on mobile — built as an applied revenue-strategy project</li>
+    </ul>
+    <button class="intro-start" onclick="document.getElementById('introOverlay').classList.add('hidden')">Start Comparing →</button>
+  </div>
 </div>
 <div class="wrap">
   <div class="eyebrow">By Charlene Mae Galang · Revenue &amp; Pricing Strategist</div>
