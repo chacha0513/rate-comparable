@@ -40,39 +40,6 @@
 
   .wrap{max-width:920px;margin:0 auto;padding:56px 24px 90px;position:relative;z-index:1;}
 
-  /* INTRO OVERLAY */
-  .intro-overlay{
-    position:fixed;inset:0;z-index:50;background:rgba(12,13,15,0.97);
-    display:flex;align-items:center;justify-content:center;padding:24px;
-    transition:opacity .5s ease, visibility .5s ease;
-  }
-  .intro-overlay.hidden{opacity:0;visibility:hidden;pointer-events:none;}
-  .intro-card{max-width:600px;width:100%;}
-  .intro-eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--lilac-dim);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
-  .intro-eyebrow::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);}
-  .intro-headline{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,5vw,42px);line-height:1.15;letter-spacing:-0.02em;margin-bottom:20px;}
-  .intro-headline span{color:var(--amber);}
-  .intro-body{font-size:15px;color:var(--chalk-dim);line-height:1.7;margin-bottom:26px;}
-  .intro-body strong{color:var(--chalk);font-weight:600;}
-  .intro-points{list-style:none;margin-bottom:32px;}
-  .intro-points li{
-    font-family:var(--font-mono);font-size:12.5px;color:var(--chalk-dim);
-    padding:10px 0;border-top:1px solid var(--line);display:flex;gap:10px;align-items:baseline;
-  }
-  .intro-points li:last-child{border-bottom:1px solid var(--line);}
-  .intro-points li::before{content:'→';color:var(--teal);flex-shrink:0;}
-  .intro-start{
-    font-family:var(--font-mono);font-size:13px;letter-spacing:0.06em;text-transform:uppercase;
-    background:var(--amber);color:var(--ink);border:none;padding:15px 28px;border-radius:6px;
-    cursor:pointer;font-weight:700;transition:background .15s ease,transform .15s ease;
-  }
-  .intro-start:hover{background:var(--chalk);transform:translateY(-1px);}
-  @media (max-width:600px){
-    .intro-headline{font-size:26px;}
-    .intro-body{font-size:14px;}
-    .intro-start{width:100%;padding:16px;}
-  }
-
   .eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--lilac-dim);display:flex;align-items:center;gap:10px;margin-bottom:16px;}
   .eyebrow::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber);}
   h1{font-family:var(--font-display);font-weight:800;font-size:clamp(28px,4.5vw,44px);letter-spacing:-0.02em;line-height:1.08;margin-bottom:14px;}
@@ -85,18 +52,6 @@
   .panel-hint{font-family:var(--font-mono);font-size:10.5px;color:var(--chalk-dim);letter-spacing:0.04em;margin-bottom:22px;}
 
   .row{display:grid;grid-template-columns:1.05fr 0.65fr 0.4fr 0.8fr 0.7fr 0.7fr auto;gap:8px;align-items:center;margin-bottom:10px;}
-  .field{min-width:0;}
-  .mobile-label{display:none;}
-  .row-collapsible{display:contents;}
-  .name-input-wrap{display:flex;align-items:center;gap:8px;}
-  .name-input-wrap input{flex:1;min-width:0;}
-  .row-toggle{
-    display:none;flex-shrink:0;width:34px;height:38px;background:transparent;
-    border:1px solid var(--line);color:var(--chalk-dim);border-radius:4px;cursor:pointer;
-    font-size:14px;transition:transform .25s ease,color .15s ease,border-color .15s ease;
-  }
-  .row-toggle:hover{color:var(--chalk);border-color:var(--lilac-dim);}
-  .row-toggle.is-collapsed{transform:rotate(-90deg);}
   .row input{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--chalk);font-family:var(--font-body);font-size:16px;padding:11px 12px;border-radius:4px;transition:border-color .15s ease;}
   .row input:focus{outline:none;border-color:var(--lilac-dim);}
   .row input::placeholder{color:#54524c;}
@@ -185,27 +140,8 @@
     .panel-title{font-size:16px;}
     .row, .headers{grid-template-columns:1fr;}
     .headers{display:none;}
-    .row{
-      background:rgba(240,237,230,0.02);border:1px solid var(--line);border-radius:8px;
-      padding:16px 14px;margin-bottom:14px;
-    }
-    .field{margin-bottom:2px;}
-    .mobile-label{
-      display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;
-      text-transform:uppercase;color:var(--lilac-dim);margin-bottom:6px;
-    }
     .field-label{margin-top:10px;}
-    .row-toggle{display:flex;align-items:center;justify-content:center;}
-    .row-collapsible{
-      display:block;max-height:600px;overflow:hidden;opacity:1;
-      transition:max-height .3s ease, opacity .25s ease, margin .3s ease;
-    }
-    .row-collapsible.collapsed{max-height:0;opacity:0;}
-    .remove-btn{
-      align-self:flex-start;width:100%;height:42px;font-size:13px;letter-spacing:0.04em;
-      text-transform:uppercase;font-family:var(--font-mono);color:var(--amber);
-      border-color:rgba(244,114,182,0.3);margin-top:4px;margin-bottom:8px;
-    }
+    .remove-btn{align-self:flex-start;width:100%;height:40px;font-size:15px;}
     .example-select{font-size:16px;padding:12px 14px;width:100%;}
     .add-row{width:100%;}
     .add-row button.primary, .add-row button.ghost{flex:1 1 auto;font-size:11px;padding:12px 14px;}
@@ -227,23 +163,10 @@
   <div class="hotel-grid" id="hotelGrid"></div>
 
 </div>
-<div class="intro-overlay" id="introOverlay">
-  <div class="intro-card">
-    <div class="intro-eyebrow">By Charlene Mae Galang · Revenue &amp; Pricing Strategist</div>
-    <h1 class="intro-headline">Same room.<br>Three prices.<br><span>One real answer.</span></h1>
-    <p class="intro-body">Direct rate, OTA bundle, "deal" package with breakfast — different totals, different lengths of stay, no easy way to compare them. This tool strips out the noise and shows the <strong>true per-night value</strong> of any set of rates, from both sides of the booking.</p>
-    <ul class="intro-points">
-      <li><strong style="color:var(--chalk);">Guest View</strong> — what you actually pay per night, after crediting perks like breakfast or late checkout</li>
-      <li><strong style="color:var(--chalk);">Revenue Manager View</strong> — what the property actually nets per night, after channel commission and perk cost</li>
-      <li>Free, no login, works on mobile — built as an applied revenue-strategy project</li>
-    </ul>
-    <button class="intro-start" onclick="document.getElementById('introOverlay').classList.add('hidden')">Start Comparing →</button>
-  </div>
-</div>
 <div class="wrap">
   <div class="eyebrow">By Charlene Mae Galang · Revenue &amp; Pricing Strategist</div>
   <h1>Rate Per Night<br><span>Value Comparator</span></h1>
-  <p class="lede">Compare any set of rates — direct, OTA, bundled, loyalty, weekly, early-bird — as a guest (true per-night value after crediting perks) or as a revenue manager (net revenue per night after channel cost). Same numbers, two different answers. Load a preset scenario below or add your own.</p>
+  <p class="lede">Direct rate, OTA price, bundled package with breakfast — same room, three prices that aren't directly comparable. Compare it as a guest (true per-night value after perks) or as a revenue manager (net revenue per night after channel cost) — same data, two very different answers.</p>
 
   <div class="panel">
     <div class="panel-index">01 — INPUT</div>
@@ -361,32 +284,16 @@ function addRow(name='', price='', nights='', notes='', perkValue='', commission
   div.className = 'row';
   div.id = id;
   div.innerHTML = `
-    <div class="field name-field">
-      <span class="mobile-label">Option name</span>
-      <div class="name-input-wrap">
-        <input type="text" placeholder="e.g. Direct rate" value="${name}" oninput="calculate()">
-        <button type="button" class="row-toggle is-collapsed" onclick="toggleRowCollapse('${id}')" aria-label="Toggle option details">▾</button>
-      </div>
-    </div>
-    <div class="row-collapsible collapsed" id="collapsible_${id}">
-      <div class="field"><span class="mobile-label">Total price</span><input type="number" placeholder="e.g. 450" value="${price}" oninput="calculate()" min="0" step="0.01"></div>
-      <div class="field"><span class="mobile-label">Nights</span><input type="number" placeholder="e.g. 3" value="${nights}" oninput="calculate()" min="1" step="1"></div>
-      <div class="field"><span class="mobile-label">Notes (optional)</span><input type="text" placeholder="incl. breakfast, etc." value="${notes}" oninput="calculate()"></div>
-      <div class="field"><span class="mobile-label">Perk cost/value $</span><input type="number" placeholder="e.g. 40" value="${perkValue}" oninput="calculate()" min="0" step="0.01"></div>
-      <div class="field"><span class="mobile-label">Channel cost %</span><input type="number" placeholder="e.g. 18" value="${commissionPct}" oninput="calculate()" min="0" max="100" step="0.1"></div>
-      <button class="remove-btn" onclick="removeRow('${id}')">× Remove</button>
-    </div>
+    <input type="text" placeholder="e.g. Direct rate" value="${name}" oninput="calculate()">
+    <input type="number" placeholder="e.g. 450" value="${price}" oninput="calculate()" min="0" step="0.01">
+    <input type="number" placeholder="e.g. 3" value="${nights}" oninput="calculate()" min="1" step="1">
+    <input type="text" placeholder="incl. breakfast, etc." value="${notes}" oninput="calculate()">
+    <input type="number" placeholder="e.g. 40" value="${perkValue}" oninput="calculate()" min="0" step="0.01">
+    <input type="number" placeholder="e.g. 18" value="${commissionPct}" oninput="calculate()" min="0" max="100" step="0.1">
+    <button class="remove-btn" onclick="removeRow('${id}')">×</button>
   `;
   document.getElementById('rows').appendChild(div);
   calculate();
-}
-
-function toggleRowCollapse(id){
-  const el = document.getElementById('collapsible_' + id);
-  const btn = document.querySelector(`#${id} .row-toggle`);
-  if(!el) return;
-  el.classList.toggle('collapsed');
-  if(btn) btn.classList.toggle('is-collapsed');
 }
 
 function removeRow(id){
